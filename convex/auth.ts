@@ -52,14 +52,14 @@ export const login = mutation({
 
 export const updateProfile = mutation({
   args: {
-    userId: v.id("users"),
+    userId: v.string(),
     name: v.optional(v.string()),
     dogName: v.optional(v.string()),
     dogBreed: v.optional(v.string()),
     dogBirthday: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.userId, {
+    await ctx.db.patch(args.userId as any, {
       ...(args.name && { name: args.name }),
       ...(args.dogName !== undefined && { dogName: args.dogName }),
       ...(args.dogBreed !== undefined && { dogBreed: args.dogBreed }),
@@ -69,15 +69,10 @@ export const updateProfile = mutation({
 });
 
 export const getCurrentUser = query({
-  args: { userId: v.optional(v.string()) },
+  args: { userId: v.string() },
   handler: async (ctx, args) => {
-    if (!args.userId) return null;
-    try {
-      const user = await ctx.db.get(args.userId as any) as { _id: any; email: string; name: string; dogName?: string; dogBreed?: string } | null;
-      if (!user) return null;
-      return { _id: user._id, email: user.email, name: user.name, dogName: user.dogName, dogBreed: user.dogBreed };
-    } catch {
-      return null;
-    }
+    const user = await ctx.db.get(args.userId as any) as { _id: string; email: string; name: string; dogName?: string; dogBreed?: string } | null;
+    if (!user) return null;
+    return { _id: user._id, email: user.email, name: user.name, dogName: user.dogName, dogBreed: user.dogBreed };
   },
 });

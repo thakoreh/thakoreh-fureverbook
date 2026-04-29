@@ -38,11 +38,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (stored) setUserId(stored);
   }, []);
 
-  // Fetch user data using stored userId (empty string when not logged in → returns null)
+  // Only call getCurrentUser when we have a userId — use "skip" to skip otherwise
   const userQuery = useQuery(
     api.auth.getCurrentUser,
-    { userId: userId ?? "" }
-  );
+    userId ? { userId } : "skip"
+  ) as (User & { _id: string }) | null | undefined;
 
   const loginMutation = useMutation(api.auth.login);
   const signupMutation = useMutation(api.auth.signup);
@@ -64,7 +64,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUserId(null);
   };
 
-  const user = mounted && userId && userQuery ? { _id: userQuery._id, email: userQuery.email, name: userQuery.name, dogName: userQuery.dogName, dogBreed: userQuery.dogBreed } : null;
+  // Derive user: only when query has returned a valid user object
+  const user = mounted && userId && userQuery && userQuery._id
+    ? { _id: userQuery._id, email: userQuery.email, name: userQuery.name, dogName: userQuery.dogName, dogBreed: userQuery.dogBreed }
+    : null;
 
   return (
     <AuthContext.Provider value={{ user, loading: !mounted || (!!userId && userQuery === undefined), login, signup, logout }}>
