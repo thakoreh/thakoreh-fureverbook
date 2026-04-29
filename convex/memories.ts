@@ -2,8 +2,9 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
 export const list = query({
-  args: { userId: v.id("users") },
+  args: { userId: v.optional(v.string()) },
   handler: async (ctx, args) => {
+    if (!args.userId) return [];
 
     const memories = await ctx.db
       .query("memories")
@@ -62,7 +63,7 @@ export const getById = query({
 
 export const create = mutation({
   args: {
-    userId: v.id("users"),
+    userId: v.string(),
     title: v.string(),
     description: v.optional(v.string()),
     memoryDate: v.optional(v.string()),
@@ -71,7 +72,7 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const memoryId = await ctx.db.insert("memories", {
-      userId: args.userId,
+      userId: args.userId as any,
       title: args.title,
       description: args.description,
       memoryDate: args.memoryDate,
@@ -88,8 +89,8 @@ export const create = mutation({
 
 export const addMedia = mutation({
   args: {
-    userId: v.id("users"),
-    memoryId: v.id("memories"),
+    userId: v.string(),
+    memoryId: v.string(),
     type: v.union(v.literal("photo"), v.literal("video")),
     filename: v.string(),
     originalName: v.optional(v.string()),
@@ -99,8 +100,8 @@ export const addMedia = mutation({
   },
   handler: async (ctx, args) => {
     const mediaId = await ctx.db.insert("media", {
-      memoryId: args.memoryId,
-      userId: args.userId,
+      memoryId: args.memoryId as any,
+      userId: args.userId as any,
       type: args.type,
       filename: args.filename,
       originalName: args.originalName,
@@ -116,18 +117,18 @@ export const addMedia = mutation({
 });
 
 export const getUploadUrl = mutation({
-  args: { userId: v.id("users") },
+  args: { userId: v.string() },
   handler: async (ctx, args) => {
     return await ctx.storage.generateUploadUrl();
   },
 });
 
 export const remove = mutation({
-  args: { userId: v.id("users"), id: v.id("memories") },
+  args: { userId: v.string(), id: v.string() },
   handler: async (ctx, args) => {
-    const memory = await ctx.db.get(args.id);
+    const memory = await ctx.db.get(args.id as any) as { userId: string } | null;
     if (!memory) throw new Error("Memory not found");
     if (memory.userId !== args.userId) throw new Error("Not authorized");
-    await ctx.db.delete(args.id);
+    await ctx.db.delete(args.id as any);
   },
 });

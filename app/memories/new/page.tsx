@@ -64,7 +64,7 @@ export default function NewMemoryPage() {
     setError("");
     try {
       const result = await createMemory({
-        userId: user._id as any,
+        userId: user._id,
         title: title.trim(),
         description: description.trim() || undefined,
         memoryDate: memoryDate || undefined,
@@ -73,12 +73,12 @@ export default function NewMemoryPage() {
       });
 
       for (const file of files) {
-        const uploadUrl = await getUploadUrl({ userId: user._id as any });
+        const uploadUrl = await getUploadUrl({ userId: user._id });
         const res = await fetch(uploadUrl, { method: "POST", body: file });
         const { storageId } = await res.json();
         await addMedia({
-          userId: user._id as any,
-          memoryId: result.memoryId as any,
+          userId: user._id,
+          memoryId: result.memoryId,
           type: file.type.startsWith("video") ? "video" : "photo",
           filename: file.name,
           originalName: file.name,

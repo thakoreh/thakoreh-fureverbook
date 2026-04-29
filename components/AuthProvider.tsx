@@ -38,10 +38,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (stored) setUserId(stored);
   }, []);
 
-  // Fetch user data using stored userId
+  // Fetch user data using stored userId (empty string when not logged in → returns null)
   const userQuery = useQuery(
     api.auth.getCurrentUser,
-    userId ? { userId: userId as any } : { userId: undefined }
+    { userId: userId ?? "" }
   );
 
   const loginMutation = useMutation(api.auth.login);
