@@ -6,6 +6,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig = {
   output: 'export',
+  basePath: '/thakoreh-fureverbook',
   images: {
     unoptimized: true,
     remotePatterns: [
