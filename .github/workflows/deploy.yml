@@ -3,9 +3,19 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -20,29 +30,30 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Setup Convex
+      - name: Set Convex URL
         run: |
-          npm install convex
-          npx convex dev --yes &
-          CONVEX_PID=$!
-          echo "Convex PID: $CONVEX_PID"
-          # Wait for Convex to start
-          sleep 15
-          # Get the deployment URL
-          cat .env.local | grep CONVEX_DEPLOYMENT
-          echo "Waiting for Convex to be ready..."
-          sleep 10
+          echo "NEXT_PUBLIC_CONVEX_URL=https://original-loris-231.convex.cloud" >> .env.local
 
       - name: Build
-        run: |
-          export NEXT_PUBLIC_CONVEX_URL=${CONVEX_URL}
-          npm run build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_CONVEX_URL: https://original-loris-231.convex.cloud
 
-      - name: Export static
-        run: npx next export
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./out
+          path: .next
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
