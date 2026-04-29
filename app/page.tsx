@@ -78,7 +78,7 @@ export default function HomePage() {
                 Start Your Journal
                 <span>→</span>
               </Link>
-              <Link href="/demo" className="btn-secondary text-lg px-8 py-4 inline-flex items-center justify-center gap-2">
+              <Link href="/signup" className="btn-secondary text-lg px-8 py-4 inline-flex items-center justify-center gap-2">
                 See Examples
               </Link>
             </div>

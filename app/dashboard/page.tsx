@@ -14,7 +14,7 @@ const MOOD_EMOJIS: Record<string, string> = {
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
-  const memories = useQuery(api.memories.list);
+  const memories = useQuery(api.memories.list, { userId: (user?._id ?? "") as any });
   const deleteMemory = useMutation(api.memories.remove);
   const [filter, setFilter] = useState<"all" | "mood" | "featured">("all");
   const [moodFilter, setMoodFilter] = useState("");
@@ -37,7 +37,7 @@ export default function DashboardPage() {
 
   const handleDelete = async (id: any) => {
     if (!confirm("Delete this memory?")) return;
-    await deleteMemory({ id });
+    await deleteMemory({ userId: user._id as any, id });
   };
 
   const filtered = (memories || []).filter((m: any) => {
@@ -50,14 +50,14 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-cream">
       <header className="bg-white shadow-warm sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/thakoreh-fureverbook" className="flex items-center gap-2">
             <span className="text-2xl">🐾</span>
             <span className="font-heading text-xl font-bold text-chocolate">Fureverbook</span>
           </Link>
           <nav className="flex items-center gap-4">
-            <Link href="/ai-gallery" className="btn-ghost text-sm flex items-center gap-1">🎨 AI Studio</Link>
-            <Link href="/collage" className="btn-ghost text-sm flex items-center gap-1">🖼️ Collage</Link>
-            <Link href="/memories/new" className="btn-primary text-sm py-2 px-4">+ New Memory</Link>
+            <Link href="/thakoreh-fureverbook/ai-gallery" className="btn-ghost text-sm flex items-center gap-1">🎨 AI Studio</Link>
+            <Link href="/thakoreh-fureverbook/collage" className="btn-ghost text-sm flex items-center gap-1">🖼️ Collage</Link>
+            <Link href="/thakoreh-fureverbook/memories/new" className="btn-primary text-sm py-2 px-4">+ New Memory</Link>
           </nav>
         </div>
       </header>
@@ -90,8 +90,8 @@ export default function DashboardPage() {
           <div className="text-center py-20">
             <div className="text-6xl mb-4">🐾</div>
             <h2 className="font-heading text-2xl text-chocolate mb-2">No memories yet</h2>
-            <p className="font-body text-chocolate/60 mb-6">Start capturing your dog&apos;s best moments.</p>
-            <Link href="/memories/new" className="btn-primary">Create your first memory</Link>
+            <p className="font-body text-chocolate/60 mb-6">Start capturing your dog's best moments.</p>
+            <Link href="/thakoreh-fureverbook/memories/new" className="btn-primary">Create your first memory</Link>
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -30,6 +30,7 @@ export default function NewMemoryPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (loading) {
@@ -60,8 +61,10 @@ export default function NewMemoryPage() {
     e.preventDefault();
     if (!title.trim()) return;
     setSubmitting(true);
+    setError("");
     try {
       const result = await createMemory({
+        userId: user._id as any,
         title: title.trim(),
         description: description.trim() || undefined,
         memoryDate: memoryDate || undefined,
@@ -70,11 +73,12 @@ export default function NewMemoryPage() {
       });
 
       for (const file of files) {
-        const uploadUrl = await getUploadUrl({});
+        const uploadUrl = await getUploadUrl({ userId: user._id as any });
         const res = await fetch(uploadUrl, { method: "POST", body: file });
         const { storageId } = await res.json();
         await addMedia({
-          memoryId: result.memoryId,
+          userId: user._id as any,
+          memoryId: result.memoryId as any,
           type: file.type.startsWith("video") ? "video" : "photo",
           filename: file.name,
           originalName: file.name,
@@ -82,9 +86,11 @@ export default function NewMemoryPage() {
         });
       }
 
-      router.push("/dashboard");
-    } catch (err) {
+      router.push("/thakoreh-fureverbook/dashboard");
+    } catch (err: any) {
       console.error(err);
+      setError(err.message || "Failed to save memory");
+    } finally {
       setSubmitting(false);
     }
   };
@@ -93,7 +99,7 @@ export default function NewMemoryPage() {
     <div className="min-h-screen bg-cream">
       <header className="bg-white shadow-warm sticky top-0 z-50">
         <div className="max-w-2xl mx-auto px-6 py-4 flex items-center gap-4">
-          <Link href="/dashboard" className="text-chocolate/60 hover:text-chocolate">← Back</Link>
+          <Link href="/thakoreh-fureverbook/dashboard" className="text-chocolate/60 hover:text-chocolate">← Back</Link>
           <h1 className="font-heading text-xl font-bold text-chocolate">New Memory</h1>
         </div>
       </header>
@@ -151,6 +157,8 @@ export default function NewMemoryPage() {
               <input type="text" className="input-warm" placeholder="Sunset Beach Park" value={location} onChange={(e) => setLocation(e.target.value)} />
             </div>
           </div>
+
+          {error && <p className="text-red-500 text-sm font-body">{error}</p>}
 
           <button type="submit" disabled={submitting || !title.trim()} className="btn-primary w-full disabled:opacity-50">
             {submitting ? "Saving..." : "Save Memory 🐾"}

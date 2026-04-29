@@ -27,7 +27,7 @@ export const signup = mutation({
       createdAt: Date.now(),
     });
 
-    return { userId };
+    return { userId: userId.toString() };
   },
 });
 
@@ -46,29 +46,20 @@ export const login = mutation({
       throw new Error("Invalid email or password");
     }
 
-    return { userId: user._id, name: user.name, email: user.email };
+    return { userId: user._id.toString(), name: user.name, email: user.email };
   },
 });
 
 export const updateProfile = mutation({
   args: {
+    userId: v.id("users"),
     name: v.optional(v.string()),
     dogName: v.optional(v.string()),
     dogBreed: v.optional(v.string()),
     dogBirthday: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
-      .first();
-
-    if (!user) throw new Error("User not found");
-
-    await ctx.db.patch(user._id, {
+    await ctx.db.patch(args.userId, {
       ...(args.name && { name: args.name }),
       ...(args.dogName !== undefined && { dogName: args.dogName }),
       ...(args.dogBreed !== undefined && { dogBreed: args.dogBreed }),
@@ -78,13 +69,10 @@ export const updateProfile = mutation({
 });
 
 export const getCurrentUser = query({
-  args: { email: v.string() },
+  args: { userId: v.optional(v.id("users")) },
   handler: async (ctx, args) => {
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", args.email))
-      .first();
-
+    if (!args.userId) return null;
+    const user = await ctx.db.get(args.userId);
     if (!user) return null;
     return { _id: user._id, email: user.email, name: user.name, dogName: user.dogName, dogBreed: user.dogBreed };
   },

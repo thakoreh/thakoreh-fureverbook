@@ -1,8 +1,0 @@
-/*    /index.html   200
-/dashboard    /dashboard/index.html   200
-/ai-gallery    /ai-gallery/index.html   200
-/collage    /collage/index.html   200
-/login    /login/index.html   200
-/signup    /signup/index.html   200
-/memories/new    /memories/new/index.html   200
-/*/    /:splat/index.html   200

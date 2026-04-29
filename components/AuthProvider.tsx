@@ -29,44 +29,45 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [email, setEmail] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const stored = localStorage.getItem("fureverbook_email");
-    setEmail(stored);
+    const stored = localStorage.getItem("fureverbook_userId");
+    if (stored) setUserId(stored);
   }, []);
 
+  // Fetch user data using stored userId
   const userQuery = useQuery(
     api.auth.getCurrentUser,
-    email ? { email } : { email: "" }
+    userId ? { userId: userId as any } : { userId: undefined }
   );
 
   const loginMutation = useMutation(api.auth.login);
   const signupMutation = useMutation(api.auth.signup);
 
   const login = async (loginEmail: string, password: string) => {
-    await loginMutation({ email: loginEmail, password });
-    localStorage.setItem("fureverbook_email", loginEmail);
-    setEmail(loginEmail);
+    const result = await loginMutation({ email: loginEmail, password });
+    localStorage.setItem("fureverbook_userId", result.userId);
+    setUserId(result.userId);
   };
 
   const signup = async (data: { email: string; password: string; name: string; dogName?: string; dogBreed?: string }) => {
-    await signupMutation(data);
-    localStorage.setItem("fureverbook_email", data.email);
-    setEmail(data.email);
+    const result = await signupMutation(data);
+    localStorage.setItem("fureverbook_userId", result.userId);
+    setUserId(result.userId);
   };
 
   const logout = () => {
-    localStorage.removeItem("fureverbook_email");
-    setEmail(null);
+    localStorage.removeItem("fureverbook_userId");
+    setUserId(null);
   };
 
-  const user = mounted && email && userQuery ? { _id: userQuery._id, email: userQuery.email, name: userQuery.name, dogName: userQuery.dogName, dogBreed: userQuery.dogBreed } : null;
+  const user = mounted && userId && userQuery ? { _id: userQuery._id, email: userQuery.email, name: userQuery.name, dogName: userQuery.dogName, dogBreed: userQuery.dogBreed } : null;
 
   return (
-    <AuthContext.Provider value={{ user, loading: !mounted || (!!email && !userQuery), login, signup, logout }}>
+    <AuthContext.Provider value={{ user, loading: !mounted || (!!userId && userQuery === undefined), login, signup, logout }}>
       {children}
     </AuthContext.Provider>
   );

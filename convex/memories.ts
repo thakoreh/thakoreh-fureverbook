@@ -2,21 +2,12 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
-      .first();
-
-    if (!user) return [];
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
 
     const memories = await ctx.db
       .query("memories")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_user", (q) => q.eq("userId", args.userId as any))
       .collect();
 
     return Promise.all(
@@ -71,6 +62,7 @@ export const getById = query({
 
 export const create = mutation({
   args: {
+    userId: v.id("users"),
     title: v.string(),
     description: v.optional(v.string()),
     memoryDate: v.optional(v.string()),
@@ -78,18 +70,8 @@ export const create = mutation({
     location: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
-      .first();
-
-    if (!user) throw new Error("User not found");
-
     const memoryId = await ctx.db.insert("memories", {
-      userId: user._id,
+      userId: args.userId,
       title: args.title,
       description: args.description,
       memoryDate: args.memoryDate,
@@ -100,12 +82,13 @@ export const create = mutation({
       updatedAt: Date.now(),
     });
 
-    return { memoryId };
+    return { memoryId: memoryId.toString() };
   },
 });
 
 export const addMedia = mutation({
   args: {
+    userId: v.id("users"),
     memoryId: v.id("memories"),
     type: v.union(v.literal("photo"), v.literal("video")),
     filename: v.string(),
@@ -115,19 +98,9 @@ export const addMedia = mutation({
     storageId: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
-      .first();
-
-    if (!user) throw new Error("User not found");
-
     const mediaId = await ctx.db.insert("media", {
       memoryId: args.memoryId,
-      userId: user._id,
+      userId: args.userId,
       type: args.type,
       filename: args.filename,
       originalName: args.originalName,
@@ -138,28 +111,23 @@ export const addMedia = mutation({
       storageId: args.storageId,
     });
 
-    return { mediaId };
+    return { mediaId: mediaId.toString() };
   },
 });
 
 export const getUploadUrl = mutation({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
     return await ctx.storage.generateUploadUrl();
   },
 });
 
 export const remove = mutation({
-  args: { id: v.id("memories") },
+  args: { userId: v.id("users"), id: v.id("memories") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
-
     const memory = await ctx.db.get(args.id);
     if (!memory) throw new Error("Memory not found");
-
+    if (memory.userId !== args.userId) throw new Error("Not authorized");
     await ctx.db.delete(args.id);
   },
 });
