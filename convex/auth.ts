@@ -52,22 +52,15 @@ export const login = mutation({
 export const getCurrentUser = query({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
-    console.log("getCurrentUser called with:", args.userId, "length:", args.userId?.length);
-    if (!args.userId || args.userId.length < 21) {
-      console.log("getCurrentUser: short userId, returning null");
-      return null;
-    }
-    try {
-      const user = await ctx.db.get(args.userId as any);
-      console.log("getCurrentUser: db.get result:", user);
-      if (!user) return null;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const u = user as any;
-      if (u.email === undefined) return null;
-      return { _id: u._id, email: u.email, name: u.name ?? "", dogName: u.dogName, dogBreed: u.dogBreed };
-    } catch (e: any) {
-      console.log("getCurrentUser: error:", e.message);
-      return null;
-    }
+    if (!args.userId || args.userId.length < 21) return null;
+    // Use filter-based lookup instead of db.get to avoid Id type issues
+    const allUsers = await ctx.db.query("users").collect();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const user = allUsers.find((u) => String((u as any)._id) === String(args.userId));
+    if (!user) return null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const u = user as any;
+    if (u.email === undefined) return null;
+    return { _id: u._id, email: u.email, name: u.name ?? "", dogName: u.dogName, dogBreed: u.dogBreed };
   },
 });
