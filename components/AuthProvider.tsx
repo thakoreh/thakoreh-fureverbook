@@ -39,9 +39,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Only call getCurrentUser when we have a userId — use "skip" to skip otherwise
+  // Skip query when no userId stored (signup/login pages)
   const userQuery = useQuery(
     api.auth.getCurrentUser,
-    { userId: userId ?? "" }
+    userId ? { userId } : "skip"
   );
 
   const loginMutation = useMutation(api.auth.login);

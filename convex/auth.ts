@@ -69,15 +69,16 @@ export const updateProfile = mutation({
 });
 
 export const getCurrentUser = query({
-  args: { userId: v.optional(v.string()) },
+  args: { userId: v.string() },
   handler: async (ctx, args) => {
-    if (!args.userId) return null;
-    // Guard: Convex IDs are 21+ chars base64-like strings
-    if (args.userId.length < 21) return null;
+    if (!args.userId || args.userId.length < 21) return null;
     try {
-      const user = await ctx.db.get(args.userId as any) as { _id: string; email: string; name: string; dogName?: string; dogBreed?: string } | null;
+      const user = await ctx.db.get(args.userId as any);
       if (!user) return null;
-      return { _id: user._id, email: user.email, name: user.name, dogName: user.dogName, dogBreed: user.dogBreed };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const u = user as any;
+      if (u.email === undefined) return null;
+      return { _id: u._id, email: u.email, name: u.name ?? "", dogName: u.dogName, dogBreed: u.dogBreed };
     } catch {
       return null;
     }
