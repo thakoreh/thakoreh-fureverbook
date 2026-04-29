@@ -41,7 +41,7 @@ export default function NewMemoryPage() {
   }
 
   if (!user) {
-    if (typeof window !== "undefined") window.location.href = "/login";
+    if (typeof window !== "undefined") window.location.href = "/thakoreh-fureverbook/login";
     return null;
   }
 
