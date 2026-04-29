@@ -10,8 +10,10 @@ export const signup = mutation({
     dogBreed: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    console.log("signup called with email:", args.email);
     // Check for existing email (scan all users - acceptable for small user counts)
     const allUsers = await ctx.db.query("users").collect();
+    console.log("Total users:", allUsers.length);
     const existing = allUsers.find((u) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const email = (u as any).email;
@@ -27,6 +29,7 @@ export const signup = mutation({
       dogBreed: args.dogBreed ?? "",
       createdAt: Date.now(),
     });
+    console.log("signup: userId created:", userId.toString());
     return { userId: userId.toString() };
   },
 });
