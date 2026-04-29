@@ -72,8 +72,14 @@ export const getCurrentUser = query({
   args: { userId: v.optional(v.string()) },
   handler: async (ctx, args) => {
     if (!args.userId) return null;
-    const user = await ctx.db.get(args.userId as any) as { _id: string; email: string; name: string; dogName?: string; dogBreed?: string } | null;
-    if (!user) return null;
-    return { _id: user._id, email: user.email, name: user.name, dogName: user.dogName, dogBreed: user.dogBreed };
+    // Guard: Convex IDs are 21+ chars base64-like strings
+    if (args.userId.length < 21) return null;
+    try {
+      const user = await ctx.db.get(args.userId as any) as { _id: string; email: string; name: string; dogName?: string; dogBreed?: string } | null;
+      if (!user) return null;
+      return { _id: user._id, email: user.email, name: user.name, dogName: user.dogName, dogBreed: user.dogBreed };
+    } catch {
+      return null;
+    }
   },
 });
