@@ -69,8 +69,9 @@ export const updateProfile = mutation({
 });
 
 export const getCurrentUser = query({
-  args: { userId: v.string() },
+  args: { userId: v.optional(v.string()) },
   handler: async (ctx, args) => {
+    if (!args.userId) return null;
     const user = await ctx.db.get(args.userId as any) as { _id: string; email: string; name: string; dogName?: string; dogBreed?: string } | null;
     if (!user) return null;
     return { _id: user._id, email: user.email, name: user.name, dogName: user.dogName, dogBreed: user.dogBreed };

@@ -2,8 +2,9 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
 export const list = query({
-  args: { userId: v.string() },
+  args: { userId: v.optional(v.string()) },
   handler: async (ctx, args) => {
+    if (!args.userId) return [];
     const memories = await ctx.db
       .query("memories")
       .withIndex("by_user", (q) => q.eq("userId", args.userId as any))

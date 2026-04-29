@@ -14,7 +14,7 @@ const MOOD_EMOJIS: Record<string, string> = {
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
-  const memories = useQuery(api.memories.list, user ? { userId: user._id } : "skip");
+  const memories = useQuery(api.memories.list, { userId: user?._id ?? "" });
   const deleteMemory = useMutation(api.memories.remove);
   const [filter, setFilter] = useState<"all" | "mood" | "featured">("all");
   const [moodFilter, setMoodFilter] = useState("");
