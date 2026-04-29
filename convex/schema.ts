@@ -5,6 +5,7 @@ export default defineSchema({
   users: defineTable({
     email: v.string(),
     name: v.string(),
+    passwordHash: v.string(),
     dogName: v.optional(v.string()),
     dogBreed: v.optional(v.string()),
     dogBirthday: v.optional(v.string()),
