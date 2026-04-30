@@ -1,14 +1,19 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import type { DataModel } from "./_generated/dataModel";
+
+type Memory = DataModel["memories"]["document"];
+type Media = DataModel["media"]["document"];
+type User = DataModel["users"]["document"];
 
 // Helper: get the current user from Clerk auth, throw if not found
-async function getAuthedUser(ctx: any) {
+async function getAuthedUser(ctx: { auth: { getUserIdentity: () => Promise<{ subject: string; email?: string; fullName?: string; givenName?: string } | null> }; db: { query: <T extends keyof DataModel>(tableName: T) => { withIndex: (indexName: string, handler: (q: any) => any) => { first: () => Promise<DataModel[T]["document"] | null> } } } }): Promise<User> {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) throw new Error("Not authenticated");
 
   const user = await ctx.db
     .query("users")
-    .withIndex("by_email", (q: any) => q.eq("email", identity.email ?? ""))
+    .withIndex("by_email", (q) => q.eq("email", identity.email ?? ""))
     .first();
 
   if (!user) throw new Error("User not found — call ensureUser first");
@@ -23,18 +28,18 @@ export const list = query({
 
     const memories = await ctx.db
       .query("memories")
-      .withIndex("by_user", (q: any) => q.eq("userId", user._id))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .collect();
 
     return Promise.all(
-      memories.map(async (m: any) => {
+      memories.map(async (m) => {
         const media = await ctx.db
           .query("media")
-          .withIndex("by_memory", (q: any) => q.eq("memoryId", m._id))
+          .withIndex("by_memory", (q) => q.eq("memoryId", m._id))
           .collect();
 
         const mediaWithUrls = await Promise.all(
-          media.map(async (item: any) => ({
+          media.map(async (item) => ({
             ...item,
             url: item.storageId
               ? await ctx.storage.getUrl(item.storageId)
@@ -61,15 +66,15 @@ export const getById = query({
     if (!memory) return null;
 
     // Verify ownership
-    if ((memory as any).userId.toString() !== user._id.toString()) return null;
+    if (memory.userId.toString() !== user._id.toString()) return null;
 
     const media = await ctx.db
       .query("media")
-      .withIndex("by_memory", (q: any) => q.eq("memoryId", memory._id))
+      .withIndex("by_memory", (q) => q.eq("memoryId", memory._id))
       .collect();
 
     const mediaWithUrls = await Promise.all(
-      media.map(async (item: any) => ({
+      media.map(async (item) => ({
         ...item,
         url: item.storageId ? await ctx.storage.getUrl(item.storageId) : null,
       }))
@@ -150,7 +155,7 @@ export const remove = mutation({
     const user = await getAuthedUser(ctx);
     const memory = await ctx.db.get(args.id);
     if (!memory) throw new Error("Memory not found");
-    if ((memory as any).userId.toString() !== user._id.toString())
+    if (memory.userId.toString() !== user._id.toString())
       throw new Error("Not authorized");
     await ctx.db.delete(args.id);
   },

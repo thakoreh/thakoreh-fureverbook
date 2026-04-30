@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useAuth } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
@@ -17,11 +18,26 @@ const STYLES = [
 ];
 
 export default function AIGalleryPage() {
+  const { isLoaded, isSignedIn } = useAuth();
   const artworks = useQuery(api.aiArt.list);
   const generate = useMutation(api.aiArt.generate);
   const [selectedStyle, setSelectedStyle] = useState("pixar");
   const [generating, setGenerating] = useState(false);
   const [latestArt, setLatestArt] = useState<{ imageUrl: string; style: string } | null>(null);
+
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      window.location.href = "/login";
+    }
+  }, [isLoaded, isSignedIn]);
+
+  if (!isLoaded || !isSignedIn) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-cream">
+        <div className="text-5xl animate-bounce-gentle">🐾</div>
+      </div>
+    );
+  }
 
   const handleGenerate = async () => {
     setGenerating(true);

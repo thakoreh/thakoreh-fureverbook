@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useAuth } from '@clerk/nextjs';
 
 const LAYOUTS = [
   { 
@@ -53,9 +54,24 @@ const DEMO_PHOTOS = [
 ];
 
 export default function CollagePage() {
+  const { isLoaded, isSignedIn } = useAuth();
   const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
   const [layout, setLayout] = useState('grid');
   const [caption, setCaption] = useState('');
+
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      window.location.href = "/login";
+    }
+  }, [isLoaded, isSignedIn]);
+
+  if (!isLoaded || !isSignedIn) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-cream">
+        <div className="text-5xl animate-bounce-gentle">🐾</div>
+      </div>
+    );
+  }
 
   function togglePhoto(url: string) {
     setSelectedPhotos(prev => 

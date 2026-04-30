@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
 
@@ -28,7 +29,9 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen font-body antialiased">
-        <ConvexClientProvider>{children}</ConvexClientProvider>
+        <ClerkProvider>
+          <ConvexClientProvider>{children}</ConvexClientProvider>
+        </ClerkProvider>
       </body>
     </html>
   );
