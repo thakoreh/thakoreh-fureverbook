@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.2.8",
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^12.9.0",
     "convex": "^1.36.1",

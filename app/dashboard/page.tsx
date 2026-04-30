@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useAuth } from "@/components/AuthProvider";
+import { useAuth, useClerk } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
@@ -13,13 +13,26 @@ const MOOD_EMOJIS: Record<string, string> = {
 };
 
 export default function DashboardPage() {
-  const { user, loading } = useAuth();
-  const memories = useQuery(api.memories.list, { userId: user?._id ?? "" });
+  const { isLoaded, isSignedIn } = useAuth();
+  const { signOut } = useClerk();
+
+  // Ensure user exists in Convex after Clerk auth
+  const ensureUser = useMutation(api.auth.ensureUser);
+  const userQuery = useQuery(api.auth.getCurrentUser);
+  const memories = useQuery(api.memories.list);
   const deleteMemory = useMutation(api.memories.remove);
+
   const [filter, setFilter] = useState<"all" | "mood" | "featured">("all");
   const [moodFilter, setMoodFilter] = useState("");
 
-  if (loading) {
+  // Auto-ensure user on first load
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      ensureUser({}).catch(console.error);
+    }
+  }, [isLoaded, isSignedIn]);
+
+  if (!isLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-cream">
         <div className="text-center">
@@ -30,14 +43,14 @@ export default function DashboardPage() {
     );
   }
 
-  if (!user) {
+  if (!isSignedIn) {
     if (typeof window !== "undefined") window.location.href = "/thakoreh-fureverbook/login";
     return null;
   }
 
   const handleDelete = async (id: any) => {
     if (!confirm("Delete this memory?")) return;
-    await deleteMemory({ userId: user._id, id });
+    await deleteMemory({ id });
   };
 
   const filtered = (memories || []).filter((m: any) => {
@@ -45,6 +58,8 @@ export default function DashboardPage() {
     if (filter === "mood" && moodFilter) return m.mood === moodFilter;
     return true;
   });
+
+  const dogName = userQuery?.dogName || "your dog";
 
   return (
     <div className="min-h-screen bg-cream">
@@ -58,6 +73,7 @@ export default function DashboardPage() {
             <Link href="/thakoreh-fureverbook/ai-gallery" className="btn-ghost text-sm flex items-center gap-1">🎨 AI Studio</Link>
             <Link href="/thakoreh-fureverbook/collage" className="btn-ghost text-sm flex items-center gap-1">🖼️ Collage</Link>
             <Link href="/thakoreh-fureverbook/memories/new" className="btn-primary text-sm py-2 px-4">+ New Memory</Link>
+            <button onClick={() => signOut()} className="btn-ghost text-sm text-chocolate/60">Sign Out</button>
           </nav>
         </div>
       </header>
@@ -65,7 +81,7 @@ export default function DashboardPage() {
       <main className="max-w-6xl mx-auto px-6 py-10">
         <div className="mb-10">
           <h1 className="font-heading text-3xl md:text-4xl font-bold text-chocolate mb-2">
-            Your memories 🐾
+            {dogName}&apos;s memories 🐾
           </h1>
           <p className="font-body text-chocolate/60">
             Every moment with your best friend, all in one place.
@@ -90,7 +106,7 @@ export default function DashboardPage() {
           <div className="text-center py-20">
             <div className="text-6xl mb-4">🐾</div>
             <h2 className="font-heading text-2xl text-chocolate mb-2">No memories yet</h2>
-            <p className="font-body text-chocolate/60 mb-6">Start capturing your dog's best moments.</p>
+            <p className="font-body text-chocolate/60 mb-6">Start capturing your dog&apos;s best moments.</p>
             <Link href="/thakoreh-fureverbook/memories/new" className="btn-primary">Create your first memory</Link>
           </div>
         ) : (

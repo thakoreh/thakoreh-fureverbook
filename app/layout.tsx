@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
-import { AuthProvider } from "@/components/AuthProvider";
 
 export const metadata: Metadata = {
   title: "Fureverbook — Dog Memory Journal",
@@ -29,9 +28,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen font-body antialiased">
-        <ConvexClientProvider>
-          <AuthProvider>{children}</AuthProvider>
-        </ConvexClientProvider>
+        <ConvexClientProvider>{children}</ConvexClientProvider>
       </body>
     </html>
   );
