@@ -42,6 +42,20 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
+      - name: Add .nojekyll
+        run: touch out/.nojekyll
+
+      # Next.js static export creates /route.html but GitHub Pages needs /route/index.html
+      - name: Fix trailing slash routes for GitHub Pages
+        run: |
+          for file in out/*.html; do
+            name=$(basename "$file" .html)
+            if [ "$name" != "index" ] && [ "$name" != "404" ]; then
+              mkdir -p "out/$name"
+              cp "$file" "out/$name/index.html"
+            fi
+          done
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
